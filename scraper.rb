@@ -6,10 +6,10 @@ require 'nokogiri'
 require 'date'
 require 'open-uri'
 
-require 'open-uri/cached'
-require 'colorize'
-require 'pry'
-require 'csv'
+# require 'open-uri/cached'
+# require 'colorize'
+# require 'pry'
+# require 'csv'
 
 def noko(url)
   Nokogiri::HTML(open(url).read) 
