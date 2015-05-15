@@ -6,10 +6,12 @@ require 'nokogiri'
 require 'date'
 require 'open-uri'
 
-# require 'open-uri/cached'
-# require 'colorize'
-# require 'pry'
-# require 'csv'
+require 'colorize'
+require 'pry'
+require 'csv'
+require 'open-uri/cached'
+OpenURI::Cache.cache_path = '.cache'
+
 
 def noko(url)
   Nokogiri::HTML(open(url).read) 
@@ -32,23 +34,39 @@ end
   '2011' => 'Folketingsmedlemmer_valgt_i_2011',
 }
 
+@parties = {}
+
 @terms.each do |term, pagename|
   url = "#{@WIKI}/wiki/#{pagename}"
   page = noko(url)
   added = 0
+
+  page.at_css('ul').css('li').each do |party|
+    next unless name = party.at_xpath('.//a').text.strip rescue nil
+    data = { 
+      id: party.text.split(':').first,
+      name: name,
+    }
+    unless @parties.has_key? data[:id]
+      puts "New party: #{name}"
+      @parties[data[:id]] = name
+    end
+
+    ScraperWiki.save_sqlite([:id, :name], data, 'parties') if data[:name]
+  end
 
   page.css('h2 + ul').each do |initial|
     initial.css('li').each do |mem|
       data = { 
         name: mem.at_xpath('.//a').text.strip,
         wikipedia: wikilink(mem.at_xpath('.//a')),
-        party: (mem.at_xpath('./text()').text.strip)[/\((.*?)\)/, 1],
+        party_id: (mem.at_xpath('./text()').text.strip)[/\((.*?)\)/, 1],
         # constituency: district,
         source: url,
         term: term,
       }
       next if %w(Indenrigsministeriet Folketinget.dk).include? data[:name]
-      raise "No party for #{data[:name]}".red unless data[:party]
+      raise "No party for #{data[:name]}".red unless data[:party_id]
       data[:wikipedia].prepend @WIKI unless data[:wikipedia].empty?
       # puts data
       added += 1

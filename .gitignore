@@ -1,4 +1,3 @@
-
-*.swp
-
+*.sw?
 *.sqlite
+.cache/*
