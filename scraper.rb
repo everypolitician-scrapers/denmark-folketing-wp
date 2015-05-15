@@ -23,12 +23,12 @@ def wikilink(a)
 end
 
 @terms = {
-  '1990' => 'Folketingsmedlemmer_valgt_i_1990',
+  # '1990' => 'Folketingsmedlemmer_valgt_i_1990',
   # '1994' => 'Folketingsmedlemmer_valgt_i_1994',
   # '1998' => 'Folketingsmedlemmer_valgt_i_1998',
   # '2001' => 'Folketingsmedlemmer_valgt_i_2001',
   # '2005' => 'Folketingsmedlemmer_valgt_i_2005',
-  # '2007' => 'Folketingsmedlemmer_valgt_i_2007',
+  '2007' => 'Folketingsmedlemmer_valgt_i_2007',
   # '2011' => 'Folketingsmedlemmer_valgt_i_2011',
 }
 
@@ -40,11 +40,11 @@ end
   page.css('h2 + ul').each do |initial|
     initial.css('li').each do |mem|
       data = { 
-        name: mem.at_xpath('a').text.strip,
-        wikipedia: mem.xpath('a[not(@class="new")]/@href').text.strip,
-        party: (mem.xpath('./text()').text.strip)[/\((.*?)\)/, 1],
+        name: mem.at_xpath('.//a').text.strip,
+        wikipedia: mem.at_xpath('.//a[not(@class="new")]/@href').text.strip,
+        party: (mem.at_xpath('./text()').text.strip)[/\((.*?)\)/, 1],
         # constituency: district,
-        source: url,
+        # source: url,
         term: term,
       }
       unless data[:party]
