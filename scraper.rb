@@ -13,15 +13,16 @@ require 'open-uri/cached'
 OpenURI::Cache.cache_path = '.cache'
 
 
-def noko(url)
+def noko_for(url)
   Nokogiri::HTML(open(url).read) 
 end
 
-@WIKI = 'http://da.wikipedia.org'
+@BASE = 'https://da.wikipedia.org'
 
 def wikilink(a)
-  return '' if a.attr('class') == 'new' 
-  @WIKI + a['href']
+  return if a.attr('class') == 'new' 
+
+  @BASE + a['href']
 end
 
 @terms = {
@@ -36,44 +37,49 @@ end
 
 @parties = {}
 
-@terms.each do |term, pagename|
-  url = "#{@WIKI}/wiki/#{pagename}"
-  page = noko(url)
-  added = 0
+def party_hash(noko, table_type)
 
-  page.at_css('ul').css('li').each do |party|
-    next unless name = party.at_xpath('.//a').text.strip rescue nil
-    data = { 
-      id: party.text.split(':').first,
-      name: name,
-    }
-    unless @parties.has_key? data[:id]
-      puts "New party: #{name}"
-      @parties[data[:id]] = name
-    end
-
-    ScraperWiki.save_sqlite([:id, :name], data, 'parties') if data[:name]
+  if table_type == 'table'
+    return Hash[noko.xpath('//table[.//th[.="Partinavn"]]//tr[td]').map { |tr| tr.css('td').take(2).map(&:text) }]
   end
 
+  return Hash[
+    noko.at_css('ul').css('li').map do |party|
+      next unless name = party.at_xpath('.//a').text.strip rescue nil
+      [ party.text.split(':').first, name ]
+    end.compact
+  ]
+end
+
+
+
+@terms.reverse_each do |term, pagename|
+  url = "#{@BASE}/wiki/#{pagename}"
+  page = noko_for(url)
+  added = 0
+
+  party_layout = term == '2011' ? 'table' : 'list'
+  parties = party_hash(page, party_layout)
+
   page.css('h2 + ul').each do |initial|
+    break if initial.xpath('preceding::h2').last.text.include? 'Eksterne henvisninger'
     initial.css('li').each do |mem|
+      next if mem.attr('class') == 'mw-empty-li'
       data = { 
         name: mem.at_xpath('.//a').text.strip,
-        wikipedia: wikilink(mem.at_xpath('.//a')),
         party_id: (mem.at_xpath('./text()').text.strip)[/\((.*?)\)/, 1],
         # constituency: district,
-        source: url,
+        wikiname: mem.xpath('.//a[not(@class="new")]/@title').map(&:text).first,
         term: term,
-      }
+      } rescue binding.pry
       next if %w(Indenrigsministeriet Folketinget.dk).include? data[:name]
       raise "No party for #{data[:name]}".red unless data[:party_id]
-      data[:wikipedia].prepend @WIKI unless data[:wikipedia].empty?
-      # puts data
+      data[:party] = parties[ data[:party_id] ]
       added += 1
       ScraperWiki.save_sqlite([:name, :term], data)
     end
   end
 
-  warn "Added #{added} for #{term}"
+  puts "Added #{added} for #{term}"
 end
 
