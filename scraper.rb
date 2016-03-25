@@ -51,6 +51,16 @@ def party_hash(noko, table_type)
   ]
 end
 
+MONTH = %w(nil januar februar marts april maj juni juli august september oktober november december)
+def date_from(text)
+  matched = text.match(/(\d+)\.?\s+(\w+)\s+(\d{4})/) 
+  unless matched
+    warn "Can't find date in #{text}"
+    return
+  end
+  d, m, y = matched.captures 
+  "%d-%02d-%02d" % [y, MONTH.find_index(m), d] 
+end
 
 
 @terms.reverse_each do |term, pagename|
@@ -71,10 +81,14 @@ end
         # constituency: district,
         wikiname: mem.xpath('.//a[not(@class="new")]/@title').map(&:text).first,
         term: term,
-      } rescue binding.pry
+      } 
       next if %w(Indenrigsministeriet Folketinget.dk).include? data[:name]
       raise "No party for #{data[:name]}".red unless data[:party_id]
       data[:party] = parties[ data[:party_id] ]
+
+      data[:end_date] = date_from(mem.text) if mem.text.include?('Udtrådt') || mem.text.include?('indtil')
+      data[:start_date] = date_from(mem.text) if mem.text.include?('Overtog')
+
       added += 1
       ScraperWiki.save_sqlite([:name, :term], data)
     end
