@@ -75,8 +75,6 @@ end
     break if initial.xpath('preceding::h2').last.text.include? 'Eksterne henvisninger'
     initial.css('li').each do |mem|
       next if mem.attr('class') == 'mw-empty-li' || mem.attr('class') == 'mw-empty-elt'
-      require 'pry'
-      binding.pry if mem.at_xpath('.//a').nil?
       data = { 
         name: mem.at_xpath('.//a').text.strip,
         party_id: (mem.at_xpath('./text()').text.strip)[/\((.*?)\)/, 1],
