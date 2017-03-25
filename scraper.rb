@@ -78,7 +78,7 @@ end
         term:     term,
       }
       next if %w(Indenrigsministeriet Folketinget.dk).include? data[:name]
-      raise "No party for #{data[:name]}".red unless data[:party_id]
+      raise "No party for #{data[:name]}" unless data[:party_id]
       data[:party] = parties[data[:party_id]]
 
       data[:end_date] = date_from(mem.text) if mem.text.include?('Udtrådt') || mem.text.include?('indtil')
