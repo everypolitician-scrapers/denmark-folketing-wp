@@ -2,14 +2,10 @@
 # encoding: utf-8
 # frozen_string_literal: true
 
-require 'scraperwiki'
-require 'nokogiri'
-require 'date'
-require 'open-uri'
-
-require 'colorize'
 require 'pry'
-require 'csv'
+require 'scraped'
+require 'scraperwiki'
+
 require 'open-uri/cached'
 OpenURI::Cache.cache_path = '.cache'
 
@@ -45,7 +41,7 @@ def party_hash(noko, table_type)
 
   Hash[
     noko.at_css('ul').css('li').map do |party|
-      next unless name = party.at_xpath('.//a').text.strip rescue nil
+      next unless name = party.at_xpath('.//a').text.tidy rescue nil
       [party.text.split(':').first, name]
     end.compact
   ]
@@ -75,8 +71,8 @@ end
     initial.css('li').each do |mem|
       next if mem.attr('class') == 'mw-empty-li' || mem.attr('class') == 'mw-empty-elt'
       data = {
-        name:     mem.at_xpath('.//a').text.strip,
-        party_id: mem.at_xpath('./text()').text.strip[/\((.*?)\)/, 1],
+        name:     mem.at_xpath('.//a').text.tidy,
+        party_id: mem.at_xpath('./text()').text.tidy[/\((.*?)\)/, 1],
         # constituency: district,
         wikiname: mem.xpath('.//a[not(@class="new")]/@title').map(&:text).first,
         term:     term,
