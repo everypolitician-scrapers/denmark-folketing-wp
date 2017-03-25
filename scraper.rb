@@ -33,6 +33,7 @@ end
   '2005' => 'Folketingsmedlemmer_valgt_i_2005',
   '2007' => 'Folketingsmedlemmer_valgt_i_2007',
   '2011' => 'Folketingsmedlemmer_valgt_i_2011',
+  '2015' => 'Folketingsmedlemmer_valgt_i_2015',
 }
 
 @parties = {}
