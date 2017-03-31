@@ -17,7 +17,6 @@ end
 
 def wikilink(a)
   return if a.attr('class') == 'new'
-
   @BASE + a['href']
 end
 
@@ -57,6 +56,7 @@ def date_from(text)
   '%d-%02d-%02d' % [y, MONTH.find_index(m), d]
 end
 
+ScraperWiki.sqliteexecute('DROP TABLE data') rescue nil
 @terms.reverse_each do |term, pagename|
   url = "#{@BASE}/wiki/#{pagename}"
   page = noko_for(url)
